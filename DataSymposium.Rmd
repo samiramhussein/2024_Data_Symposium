@@ -1,0 +1,107 @@
+---
+title: "2024DataSymposium"
+author: "Samira Hussein", "Valentina Burgos", "Chrystal Carrasco" 
+date: "2024-07-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(gplots)
+library(maps) # for map data  #install.packages('maps')
+library(ggmap) # for mapping points on maps  #install.packages('ggmap')
+library(RColorBrewer) # for color palettes #install.packages('RColorBrewer')
+library(leaflet) # for highly customizable mapping  #install.packages('leaflet')
+library(ggthemes) # for more themes (including theme_map())  #install.packages('ggthemes')
+library(usdata) 
+library(usmap)
+library(dplyr)
+library(raster)
+register_google(key="YOURKEY")
+```
+
+##Getting and cleaning Dataset
+
+```{r}
+lakes <- read.csv("/Users/samirahussein/Downloads/Permafrost.csv")
+Canada <-  read.csv("/Users/samirahussein/Downloads/Canada_Temperature_Data.csv")
+
+
+head(lakes) #first 5 values
+names(lakes) #tells you all names of colums
+dim(lakes) # tells you rows and how many columns
+#view(lakes) don't uncomment this, it loads the whole dataset and takes a while because theres so many values
+
+head(Canada) 
+names(Canada) 
+dim(Canada)
+#view(state_prov)
+
+lakes2 <- na.omit(lakes) #Removes all null values
+summary(lakes2) 
+dim(lakes)
+
+lakes2 <-  lakes2[,!names(lakes2) %in% c("Join_Cou_H","Join_Cou_G", "Join_Cou_O","GeoDAR","GOODD","Reservoir","SWOT_obs","SWORD","Mountain","Continent","Shore_len")] #Removes unnecessary columns
+
+
+head(lakes2)
+
+state_prov <- state_prov %>% 
+  filter(Country %in% c("Canada", "US")) %>% 
+  group_by(Year)
+
+
+```
+
+
+##Exploring data
+
+```{r}
+ggplot(data=lakes, aes(x= Glacier))+
+  geom_bar()
+  
+ggplot(data=lakes, aes(x= Country, y= Glacier))+
+geom_line()
+
+ggplot(data=lakes, aes(x = Permafrost))+
+  geom_bar() #majority of lakes are in Permafrost value 4, than 0,3,1,2 being the
+
+ggplot(data=lakes2, aes(x = Permafrost))+
+  geom_bar()
+
+```
+
+##Mapping Visuals
+
+```{r}
+##With Large Dataset
+ ggplot(lakes, aes(x=Longitude, y= Latitude)) +
+geom_point(aes(color= Permafrost), alpha = .07, size = .07) 
+ 
+  ggplot(lakes, aes(x=Longitude, y= Latitude)) +
+geom_point(aes(color= Glacier), alpha = .07, size = .07) 
+  
+  ## with Filtered Dataset
+   ggplot(lakes2, aes(x=Longitude, y= Latitude)) +
+geom_point(aes(color= Permafrost), alpha = .7, size = .7) 
+ 
+  ggplot(lakes2, aes(x=Longitude, y= Latitude)) +
+geom_point(aes(color= Glacier), alpha = .7, size = .7) 
+```
+
+
+
+##Line Graph with US/Canada Temperature Data
+```{r}
+##I want this to look better since it doesn't show how the background of the different temperatures (grey lines) as clearly, (should I facet by season?)
+  ggplot(Canada, aes(x = Year, y= Tm, color= Prov))+
+    geom_line(
+        data = Canada , aes(Year, Tm, group = Prov),
+        color = "grey85", linewidth = .65) +
+       geom_smooth(se=FALSE)+
+scale_x_continuous(limits = c(1916, 2018), expand = c(0, 0), breaks = seq(1916, 2018, by = 20)) +
+   theme_stata()+
+  labs(title = "Canada Temperatures", x = "Year (1917-2017)", y= "Temperature", subtitle = "") 
+```
